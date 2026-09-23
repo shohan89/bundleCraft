@@ -25,7 +25,7 @@ export class InvalidOAuthHmacError extends Error {}
 export class MissingOAuthCodeError extends Error {}
 export class TokenExchangeFailedError extends Error {}
 
-function requiredEnv(name: string): string {
+export function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
     throw new MissingConfigError(`Missing required environment variable: ${name}`);

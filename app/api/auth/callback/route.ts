@@ -7,6 +7,7 @@ import {
   MissingOAuthCodeError,
   TokenExchangeFailedError,
   completeOAuth,
+  requiredEnv,
 } from "@/lib/auth/shopify-auth";
 import { OAUTH_STATE_COOKIE_NAME, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
 
@@ -25,8 +26,14 @@ export async function GET(request: NextRequest) {
       expectedState,
     );
 
+    // Built from our own configured app URL, not request.nextUrl.origin —
+    // behind a tunnel or reverse proxy (Cloudflare, Vercel, etc.) the
+    // request's perceived origin is the internal connection address, not
+    // the public one, and would send the merchant's browser to a URL that
+    // doesn't actually reach us.
+    const appUrl = requiredEnv("SHOPIFY_APP_URL");
     const response = NextResponse.redirect(
-      new URL(`/dashboard?shop=${encodeURIComponent(shopDomain)}`, request.nextUrl.origin),
+      new URL(`/dashboard?shop=${encodeURIComponent(shopDomain)}`, appUrl),
     );
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,
