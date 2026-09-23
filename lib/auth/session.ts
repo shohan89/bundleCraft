@@ -11,7 +11,13 @@
  * need the live Shop record (to catch uninstalled/inactive shops) use
  * `getAuthenticatedShop` in lib/auth/shopify-auth.ts instead.
  */
-import { base64UrlDecode, base64UrlEncode, deriveSigningKey, signBase64Url, verifyBase64Url } from "./crypto";
+import {
+  base64UrlDecode,
+  base64UrlEncode,
+  deriveSigningKey,
+  signBase64Url,
+  verifyBase64Url,
+} from "./crypto";
 
 export const SESSION_COOKIE_NAME = "bundlecraft_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days

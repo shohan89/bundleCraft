@@ -9,7 +9,11 @@ import {
   completeOAuth,
   requiredEnv,
 } from "@/lib/auth/shopify-auth";
-import { OAUTH_STATE_COOKIE_NAME, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
+import {
+  OAUTH_STATE_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth/session";
 
 /**
  * OAuth callback. Validates Shopify's HMAC + our anti-CSRF state, exchanges

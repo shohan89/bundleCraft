@@ -14,7 +14,12 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
  * request's shop identity.
  */
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/bundles/:path*", "/api/analytics/:path*", "/api/settings/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/api/bundles/:path*",
+    "/api/analytics/:path*",
+    "/api/settings/:path*",
+  ],
 };
 
 export async function proxy(request: NextRequest) {

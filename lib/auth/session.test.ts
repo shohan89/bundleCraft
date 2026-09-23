@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SESSION_MAX_AGE_SECONDS, createSessionToken, verifySessionToken } from "./session";
 

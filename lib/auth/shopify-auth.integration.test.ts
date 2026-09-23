@@ -1,3 +1,4 @@
+// @vitest-environment node
 import "dotenv/config";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";

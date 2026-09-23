@@ -45,10 +45,7 @@ export function buildAuthorizeUrl(params: {
  * `hmac` and `signature`, with `%` and `&` percent-encoded in keys/values,
  * sorted by key, joined with `&`, HMAC-SHA256'd with the app's API secret.
  */
-export async function verifyOAuthHmac(
-  query: URLSearchParams,
-  apiSecret: string,
-): Promise<boolean> {
+export async function verifyOAuthHmac(query: URLSearchParams, apiSecret: string): Promise<boolean> {
   const providedHmac = query.get("hmac");
   if (!providedHmac) return false;
 
@@ -89,12 +86,16 @@ export async function exchangeCodeForAccessToken(params: {
   });
 
   if (!response.ok) {
-    throw new OAuthTokenExchangeError(`Shopify token exchange failed with status ${response.status}`);
+    throw new OAuthTokenExchangeError(
+      `Shopify token exchange failed with status ${response.status}`,
+    );
   }
 
   const data = (await response.json()) as { access_token?: string; scope?: string };
   if (!data.access_token || !data.scope) {
-    throw new OAuthTokenExchangeError("Shopify token exchange response was missing required fields");
+    throw new OAuthTokenExchangeError(
+      "Shopify token exchange response was missing required fields",
+    );
   }
 
   return { accessToken: data.access_token, scope: data.scope };

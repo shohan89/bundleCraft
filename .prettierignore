@@ -7,3 +7,6 @@ public
 docs
 tasks
 actions
+
+# shadcn-generated components — keep them matching upstream `shadcn add` output
+components/ui

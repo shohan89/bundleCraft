@@ -42,9 +42,7 @@ export function randomToken(byteLength = 32): string {
 }
 
 async function importBaseKey(secret: string): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", getEncoder().encode(secret), "HKDF", false, [
-    "deriveKey",
-  ]);
+  return crypto.subtle.importKey("raw", getEncoder().encode(secret), "HKDF", false, ["deriveKey"]);
 }
 
 /** Derives a purpose-bound HMAC-SHA256 signing key from SESSION_SECRET. */
