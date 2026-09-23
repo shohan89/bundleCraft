@@ -1,0 +1,16 @@
+name = "bundlecraft"
+client_id = ""
+application_url = "https://localhost:3000"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_products,read_orders"
+
+[auth]
+redirect_urls = ["https://localhost:3000/api/auth/callback"]
+
+[webhooks]
+api_version = "2025-01"
+
+[build]
+automatically_update_urls_on_dev = true
