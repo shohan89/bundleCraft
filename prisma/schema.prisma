@@ -1,7 +1,9 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+//
+// Source of truth for these models: docs/04-DATABASE_DESIGN.md and
+// tasks/phase-02-database/database-implementation.md. Field lists are kept
+// literal to those docs — no speculative fields were added.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +12,200 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum ShopPlan {
+  free
+  starter
+  growth
+  pro
+}
+
+enum ShopStatus {
+  active
+  inactive
+}
+
+enum BundleType {
+  fixed
+  quantity
+  mix_match
+}
+
+enum DiscountType {
+  percentage
+  fixed_amount
+}
+
+enum BundleStatus {
+  draft
+  active
+  inactive
+}
+
+enum TemplateCategory {
+  fashion
+  beauty
+}
+
+enum CustomizationLayout {
+  card
+  horizontal
+  vertical
+}
+
+enum AnalyticsEventType {
+  bundle_view
+  bundle_add
+  bundle_purchase
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// Application users. Not documented as tenant-scoped or linked to Shop by
+/// any field in docs/04-DATABASE_DESIGN.md or tasks/phase-02 — implemented
+/// as a standalone table per the literal field list.
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// A Shopify merchant / tenant. All merchant-owned data (bundles, analytics,
+/// subscription) is isolated by shopId.
+model Shop {
+  id          String     @id @default(uuid()) @db.Uuid
+  shopDomain  String     @unique @map("shop_domain")
+  accessToken String     @map("access_token")
+  email       String
+  plan        ShopPlan   @default(free)
+  status      ShopStatus @default(active)
+  installedAt DateTime   @default(now()) @map("installed_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  bundles         Bundle[]
+  analyticsEvents AnalyticsEvent[]
+  subscription    Subscription?
+
+  @@index([shopDomain])
+  @@map("shops")
+}
+
+/// A merchant-created product bundle.
+model Bundle {
+  id            String       @id @default(uuid()) @db.Uuid
+  shopId        String       @map("shop_id") @db.Uuid
+  title         String
+  description   String?
+  bundleType    BundleType   @map("bundle_type")
+  discountType  DiscountType @map("discount_type")
+  discountValue Decimal      @map("discount_value") @db.Decimal(10, 2)
+  status        BundleStatus @default(draft)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  shop            Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bundleProducts  BundleProduct[]
+  customization   Customization?
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([shopId])
+  @@index([status])
+  @@map("bundles")
+}
+
+/// Links a Bundle to the Shopify products/variants that make it up.
+model BundleProduct {
+  id                String   @id @default(uuid()) @db.Uuid
+  bundleId          String   @map("bundle_id") @db.Uuid
+  shopifyProductId  String   @map("shopify_product_id")
+  shopifyVariantId  String   @map("shopify_variant_id")
+  quantity          Int      @default(1)
+  position          Int      @default(0)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@index([bundleId])
+  @@map("bundle_products")
+}
+
+/// Predefined bundle templates shared across all shops (not tenant-scoped).
+model Template {
+  id                String           @id @default(uuid()) @db.Uuid
+  name              String
+  category          TemplateCategory
+  configurationJson Json             @map("configuration_json")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@unique([name, category])
+  @@map("templates")
+}
+
+/// Storefront widget appearance settings for a single Bundle.
+model Customization {
+  id              String              @id @default(uuid()) @db.Uuid
+  bundleId        String              @unique @map("bundle_id") @db.Uuid
+  primaryColor    String              @map("primary_color")
+  buttonColor     String              @map("button_color")
+  backgroundColor String              @map("background_color")
+  layout          CustomizationLayout @default(card)
+  fontSize        Int                 @map("font_size")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@map("customizations")
+}
+
+/// Bundle performance tracking events (views, adds, purchases).
+model AnalyticsEvent {
+  id           String             @id @default(uuid()) @db.Uuid
+  shopId       String             @map("shop_id") @db.Uuid
+  bundleId     String             @map("bundle_id") @db.Uuid
+  eventType    AnalyticsEventType @map("event_type")
+  revenue      Decimal?           @db.Decimal(10, 2)
+  metadataJson Json?              @map("metadata_json")
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([bundleId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
+/// Shopify billing / subscription record for a Shop. One Shop has at most
+/// one Subscription.
+model Subscription {
+  id              String             @id @default(uuid()) @db.Uuid
+  shopId          String             @unique @map("shop_id") @db.Uuid
+  shopifyChargeId String             @map("shopify_charge_id")
+  plan            ShopPlan
+  status          SubscriptionStatus @default(active)
+  startedAt       DateTime           @default(now()) @map("started_at")
+  cancelledAt     DateTime?          @map("cancelled_at")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
