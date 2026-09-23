@@ -10,6 +10,11 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // CLI operations (migrate, studio, introspect) need a session-mode
+    // connection. Supabase's transaction-mode pooler (DATABASE_URL, :6543)
+    // can't handle migrate's DDL/session requirements and hangs instead of
+    // failing. The app's runtime PrismaClient (lib/prisma.ts) still uses
+    // the pooled DATABASE_URL directly, independent of this file.
+    url: process.env["DIRECT_URL"],
   },
 });
