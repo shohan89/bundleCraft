@@ -30,15 +30,15 @@ export async function GET(request: NextRequest) {
       expectedState,
     );
 
-    // Built from our own configured app URL, not request.nextUrl.origin —
-    // behind a tunnel or reverse proxy (Cloudflare, Vercel, etc.) the
-    // request's perceived origin is the internal connection address, not
-    // the public one, and would send the merchant's browser to a URL that
-    // doesn't actually reach us.
-    const appUrl = requiredEnv("SHOPIFY_APP_URL");
-    const response = NextResponse.redirect(
-      new URL(`/dashboard?shop=${encodeURIComponent(shopDomain)}`, appUrl),
-    );
+    // We're on a genuine top-level navigation right now (see
+    // app/api/auth/shopify/route.ts's iframe-breakout bounce) — not
+    // embedded in the Shopify Admin iframe. Redirecting to our own
+    // /dashboard here would leave the merchant outside the admin chrome.
+    // Redirecting to this Shopify URL re-embeds the app properly; it then
+    // loads application_url again with the session cookie set below,
+    // which app/page.tsx sends on to /dashboard.
+    const apiKey = requiredEnv("SHOPIFY_API_KEY");
+    const response = NextResponse.redirect(`https://${shopDomain}/admin/apps/${apiKey}`);
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       secure: true,
