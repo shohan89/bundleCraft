@@ -4,7 +4,10 @@ application_url = "https://localhost:3000"
 embedded = true
 
 [access_scopes]
-scopes = "read_products,write_products,read_orders"
+# Kept in sync with the "Required Shopify Permissions" list in
+# docs/05-SHOPIFY_INTEGRATION.md and tasks/phase-03-authentication/shopify-auth.md,
+# and with SHOPIFY_SCOPES in services/shopify/oauth.ts.
+scopes = "read_products,read_orders,write_themes"
 
 [auth]
 redirect_urls = ["https://localhost:3000/api/auth/callback"]
