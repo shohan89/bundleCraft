@@ -115,6 +115,25 @@ export async function decryptString(key: CryptoKey, payload: string): Promise<st
 }
 
 /**
+ * Imports SHOPIFY_API_SECRET directly (no HKDF) as an HMAC-SHA256 key. Used to verify
+ * Shopify's own embedded-app session tokens, which it signs with the raw client secret —
+ * the same "no derived key" requirement as `hmacHex` below, just needed as a `CryptoKey`
+ * (for `verifyBase64Url`) instead of a hex digest.
+ */
+export async function importRawHmacKey(
+  secret: string,
+  usages: KeyUsage[] = ["verify"],
+): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    "raw",
+    getEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    usages,
+  );
+}
+
+/**
  * Plain HMAC-SHA256 hex digest using the raw secret as the key — required
  * by Shopify's OAuth callback HMAC verification (Shopify signs with the
  * app's API secret directly, not a derived key).

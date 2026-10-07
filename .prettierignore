@@ -10,3 +10,6 @@ actions
 
 # shadcn-generated components — keep them matching upstream `shadcn add` output
 components/ui
+
+# Theme extension files ship as-is; the JS is a build artifact (scripts/build-widget.mjs)
+extensions

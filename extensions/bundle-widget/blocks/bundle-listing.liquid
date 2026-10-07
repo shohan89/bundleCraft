@@ -1,0 +1,22 @@
+{% comment %}
+  Bundle landing page. Add this block to a collection or page template (for example
+  the collection whose handle is "bundles", i.e. /collections/bundles) to list every
+  active bundle as a card (products, price, availability) with a button that opens the
+  bundle in place. When there are no bundles the block says so.
+{% endcomment %}
+{% render 'bundlecraft-root', mode: 'listing', block: block %}
+
+{% schema %}
+{
+  "name": "BundleCraft bundle list",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Bundles"
+    }
+  ]
+}
+{% endschema %}

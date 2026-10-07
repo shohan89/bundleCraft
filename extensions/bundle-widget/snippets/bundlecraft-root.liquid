@@ -1,0 +1,74 @@
+{%- comment -%}
+  Shared mount point for both BundleCraft blocks. Renders only public storefront
+  values into data-* attributes (no secrets): the App Proxy path, Shopify's own cart
+  URLs, the current product id, currency and locale. All bundle data is fetched by the
+  script through the App Proxy, which only ever returns ACTIVE bundles for this shop.
+
+  Parameters: mode ('product' | 'listing'), block
+{%- endcomment -%}
+
+{{ 'bundlecraft-widget.css' | asset_url | stylesheet_tag }}
+
+{%- capture bc_strings -%}
+{
+  "loading": {{ 'bundlecraft.loading' | t | json }},
+  "unavailable": {{ 'bundlecraft.unavailable' | t | json }},
+  "error": {{ 'bundlecraft.error' | t | json }},
+  "network": {{ 'bundlecraft.network' | t | json }},
+  "retry": {{ 'bundlecraft.retry' | t | json }},
+  "empty": {{ 'bundlecraft.empty' | t | json }},
+  "add": {{ 'bundlecraft.add' | t | json }},
+  "adding": {{ 'bundlecraft.adding' | t | json }},
+  "added": {{ 'bundlecraft.added' | t | json }},
+  "cartFailed": {{ 'bundlecraft.cart_failed' | t | json }},
+  "viewCart": {{ 'bundlecraft.view_cart' | t | json }},
+  "selected": {{ 'bundlecraft.selected' | t | json }},
+  "selectedCount": {{ 'bundlecraft.selected_count' | t | json }},
+  "included": {{ 'bundlecraft.included' | t | json }},
+  "soldOut": {{ 'bundlecraft.sold_out' | t | json }},
+  "save": {{ 'bundlecraft.save' | t | json }},
+  "regular": {{ 'bundlecraft.regular' | t | json }},
+  "youSave": {{ 'bundlecraft.you_save' | t | json }},
+  "bundlePrice": {{ 'bundlecraft.bundle_price' | t | json }},
+  "viewBundle": {{ 'bundlecraft.view_bundle' | t | json }},
+  "hideBundle": {{ 'bundlecraft.hide_bundle' | t | json }},
+  "chooseItems": {{ 'bundlecraft.choose_items' | t | json }},
+  "chooseCount": {{ 'bundlecraft.choose_count' | t | json }},
+  "moreProducts": {{ 'bundlecraft.more_products' | t | json }},
+  "previewLabel": {{ 'bundlecraft.preview_label' | t | json }},
+  "priceDepends": {{ 'bundlecraft.price_depends' | t | json }},
+  "discountNote": {{ 'bundlecraft.discount_note' | t | json }},
+  "bundleSoldOut": {{ 'bundlecraft.bundle_sold_out' | t | json }},
+  "bundleUnavailable": {{ 'bundlecraft.bundle_unavailable' | t | json }},
+  "listingLoading": {{ 'bundlecraft.listing_loading' | t | json }},
+  "products": {{ 'bundlecraft.products' | t | json }},
+  "bundleTypeFixed": {{ 'bundlecraft.bundle_type_fixed' | t | json }},
+  "bundleTypeQuantity": {{ 'bundlecraft.bundle_type_quantity' | t | json }},
+  "bundleTypeMixMatch": {{ 'bundlecraft.bundle_type_mix_match' | t | json }}
+}
+{%- endcapture -%}
+
+<div
+  class="bc-root"
+  data-bundlecraft-widget
+  data-mode="{{ mode }}"
+  data-api-base="{{ routes.root_url | append: 'apps/bundlecraft' | replace: '//', '/' }}"
+  data-cart-add-url="{{ routes.cart_add_url }}.js"
+  data-cart-url="{{ routes.cart_url }}"
+  {%- if mode == 'product' %}
+  data-product-id="{{ product.id }}"
+  data-bundle-id="{{ block.settings.bundle_id | strip }}"
+  {%- endif %}
+  data-heading="{{ block.settings.heading | strip }}"
+  data-currency="{{ cart.currency.iso_code }}"
+  data-locale="{{ request.locale.iso_code }}"
+  data-show-empty="{{ block.settings.show_when_empty }}"
+  data-strings="{{ bc_strings | strip_newlines | escape }}"
+  {{ block.shopify_attributes }}
+></div>
+
+<noscript>
+  <p class="bc-state">{{ 'bundlecraft.noscript' | t }}</p>
+</noscript>
+
+<script src="{{ 'bundlecraft-widget.js' | asset_url }}" defer></script>

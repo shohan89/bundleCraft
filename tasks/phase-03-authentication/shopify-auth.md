@@ -144,6 +144,8 @@ Themes:
 
 write_themes
 
+write_discounts (added by ACTION-007)
+
 Future:
 
 customers

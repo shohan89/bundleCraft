@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { oauthCallbackLimiter } from "@/lib/api/limiters";
+import { clientKey, rateLimitEnabled } from "@/lib/api/rate-limit";
+import { logUnexpectedError } from "@/lib/log";
 import {
   InvalidOAuthHmacError,
   InvalidOAuthStateError,
@@ -22,6 +25,15 @@ import {
  * the access token, API secret, or session secret in any response.
  */
 export async function GET(request: NextRequest) {
+  if (rateLimitEnabled()) {
+    const limit = oauthCallbackLimiter.hit(clientKey(request));
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+      );
+    }
+  }
   const expectedState = request.cookies.get(OAUTH_STATE_COOKIE_NAME)?.value;
 
   try {
@@ -67,10 +79,10 @@ export async function GET(request: NextRequest) {
       );
     }
     if (error instanceof MissingConfigError) {
-      console.error("Shopify auth misconfiguration:", error.message);
+      logUnexpectedError("oauth_misconfiguration", error, request);
       return NextResponse.json({ error: "Authentication is not configured" }, { status: 500 });
     }
-    console.error("Unexpected error completing Shopify OAuth", error);
+    logUnexpectedError("oauth_callback_failed", error, request);
     return NextResponse.json({ error: "Unexpected authentication error" }, { status: 500 });
   }
 }

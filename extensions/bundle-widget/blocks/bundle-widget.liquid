@@ -1,0 +1,28 @@
+{% render 'bundlecraft-root', mode: 'product', block: block %}
+
+{% schema %}
+{
+  "name": "BundleCraft bundle",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Complete your look"
+    },
+    {
+      "type": "text",
+      "id": "bundle_id",
+      "label": "Bundle ID (optional)",
+      "info": "Leave blank to show active bundles that include the product being viewed."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_when_empty",
+      "label": "Show a message when there is no bundle",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

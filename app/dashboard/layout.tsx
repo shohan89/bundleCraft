@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { requireAuthenticatedShop } from "@/lib/dashboard/auth";
+// The storefront widget stylesheet, so the design preview looks exactly like the store. Every
+// rule in it is scoped under .bc- and cannot affect the dashboard.
+import "../../extensions/bundle-widget/assets/bundlecraft-widget.css";
 
 export const metadata: Metadata = {
   title: "Dashboard – BundleCraft",

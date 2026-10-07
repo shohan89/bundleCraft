@@ -1,51 +1,36 @@
-import { BarChart3, DollarSign, Eye, ShoppingCart, TrendingUp } from "lucide-react";
-import { MetricCard } from "@/components/dashboard/MetricCard";
+import { AnalyticsDashboard } from "@/components/dashboard/AnalyticsDashboard";
+import { UpgradePrompt } from "@/components/dashboard/UpgradePrompt";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { EmptyState } from "@/components/dashboard/EmptyState";
 import { requireAuthenticatedShop } from "@/lib/dashboard/auth";
-import { getAnalyticsSummary } from "@/services/dashboard/analytics";
-
-function formatCurrency(value: number | null): string | null {
-  if (value === null) return null;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
-}
-
-function formatPercent(value: number | null): string | null {
-  if (value === null) return null;
-  return new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 }).format(
-    value,
-  );
-}
+import { prisma } from "@/lib/prisma";
+import { hasFeatureAccess } from "@/services/billing/access";
 
 export default async function AnalyticsPage() {
   const shop = await requireAuthenticatedShop();
-  const summary = await getAnalyticsSummary(shop.id);
-
-  const hasAnyData = summary.orders > 0 || summary.views > 0 || summary.adds > 0;
+  // Server-enforced plan gate (the API refuses too); this page just explains it.
+  if (!(await hasFeatureAccess(shop.id, "analytics"))) {
+    return (
+      <div className="space-y-8">
+        <PageHeader title="Analytics" description="Track how your bundles are performing." />
+        <UpgradePrompt
+          title="Analytics is part of the Growth plan"
+          description="Upgrade to see views, adds, purchases, revenue and conversion for your bundles. We keep collecting the data in the meantime."
+        />
+      </div>
+    );
+  }
+  // Only the shop's own bundles are offered in the filter; the numbers themselves
+  // are fetched by the client from GET /api/analytics/overview (session-scoped).
+  const bundles = await prisma.bundle.findMany({
+    where: { shopId: shop.id },
+    orderBy: { title: "asc" },
+    select: { id: true, title: true },
+  });
 
   return (
     <div className="space-y-8">
       <PageHeader title="Analytics" description="Track how your bundles are performing." />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <MetricCard label="Revenue" value={formatCurrency(summary.revenue)} icon={DollarSign} />
-        <MetricCard label="Orders" value={String(summary.orders)} icon={ShoppingCart} />
-        <MetricCard label="Views" value={String(summary.views)} icon={Eye} />
-        <MetricCard label="Adds" value={String(summary.adds)} icon={BarChart3} />
-        <MetricCard
-          label="Conversion rate"
-          value={formatPercent(summary.conversionRate)}
-          icon={TrendingUp}
-        />
-      </div>
-
-      {!hasAnyData ? (
-        <EmptyState
-          icon={BarChart3}
-          title="No analytics data yet"
-          description="Once your bundles start getting views and purchases, performance data will appear here automatically."
-        />
-      ) : null}
+      <AnalyticsDashboard bundles={bundles} />
     </div>
   );
 }

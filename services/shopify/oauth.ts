@@ -11,7 +11,12 @@ import { hmacHex, timingSafeEqual } from "@/lib/auth/crypto";
  * "Required Shopify Permissions" list in docs/05-SHOPIFY_INTEGRATION.md /
  * tasks/phase-03-authentication/shopify-auth.md.
  */
-export const SHOPIFY_SCOPES = ["read_products", "read_orders", "write_themes"] as const;
+export const SHOPIFY_SCOPES = [
+  "read_products",
+  "read_orders",
+  "write_themes",
+  "write_discounts",
+] as const;
 
 const SHOP_DOMAIN_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 

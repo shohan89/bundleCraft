@@ -1,0 +1,50 @@
+# Production Shopify app configuration TEMPLATE. Copy to shopify.app.production.toml, fill in the
+# values for your PRODUCTION app (a separate app in the Partner Dashboard from the development
+# one), then check it with `npm run check:production` and deploy with
+# `shopify app deploy --config production` (see docs/15-PRODUCTION_DEPLOYMENT.md).
+# Nothing here is a secret: client_id is public; the client SECRET lives only in the host's environment.
+#
+# Replace <your-domain> everywhere with the host the app is served from (for example app.example.com).
+# It must match SHOPIFY_APP_URL and NEXT_PUBLIC_APP_URL in the production environment.
+
+name = "bundlecraft"
+client_id = "<32-character-client-id-of-the-production-app>"
+application_url = "https://<your-domain>"
+embedded = true
+
+[access_scopes]
+# Must equal SHOPIFY_SCOPES in services/shopify/oauth.ts (npm run check:production enforces it).
+scopes = "read_products,read_orders,write_themes,write_discounts"
+
+[auth]
+redirect_urls = ["https://<your-domain>/api/auth/callback"]
+
+[webhooks]
+api_version = "2025-01"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/api/webhooks/app-uninstalled"
+
+[[webhooks.subscriptions]]
+topics = ["app_subscriptions/update"]
+uri = "/api/webhooks/app-subscriptions-update"
+
+[[webhooks.subscriptions]]
+topics = ["orders/paid"]
+uri = "/api/webhooks/orders-paid"
+
+[[webhooks.subscriptions]]
+topics = ["products/create", "products/update", "products/delete"]
+uri = "/api/webhooks/products"
+
+# MANDATORY privacy webhooks (App Store requirement).
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/api/webhooks/compliance"
+
+# The storefront widget calls https://<shop>/apps/bundlecraft/*, which Shopify forwards here, signed.
+[app_proxy]
+url = "https://<your-domain>/api/storefront"
+subpath = "bundlecraft"
+prefix = "apps"

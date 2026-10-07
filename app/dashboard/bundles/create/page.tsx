@@ -1,17 +1,13 @@
 import { BundleWizard } from "@/components/dashboard/BundleWizard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { prisma } from "@/lib/prisma";
 import { requireAuthenticatedShop } from "@/lib/dashboard/auth";
+import { listTemplates } from "@/services/templates/templates";
 
 export default async function CreateBundlePage() {
-  // Auth check only — templates are shared/global (seeded in ACTION-002),
-  // not shop-scoped, so nothing else here needs the shop record.
+  // Auth check only: templates are application-owned and shared by every shop (seeded from
+  // lib/templates/catalog.ts), not shop-scoped, so nothing else here needs the shop record.
   await requireAuthenticatedShop();
-
-  const templates = await prisma.template.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, category: true },
-  });
+  const templates = await listTemplates();
 
   return (
     <div className="space-y-6">

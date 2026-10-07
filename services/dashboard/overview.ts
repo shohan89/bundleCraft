@@ -1,12 +1,11 @@
+import type { MetricTotals } from "@/lib/analytics/types";
 import { prisma } from "@/lib/prisma";
+import { getTotals } from "@/services/analytics/queries";
 
 export interface DashboardOverview {
   activeBundleCount: number;
-  /** Sum of AnalyticsEvent.revenue for purchase events. `null` means no purchase data exists yet. */
-  totalRevenue: number | null;
-  orderCount: number;
-  /** purchases / views. `null` means no view data exists yet (nothing to divide by). */
-  conversionRate: number | null;
+  /** All-time totals from the analytics service. Zeros mean nothing has been recorded, not a placeholder. */
+  totals: MetricTotals;
 }
 
 export interface RecentBundle {
@@ -16,31 +15,13 @@ export interface RecentBundle {
   createdAt: Date;
 }
 
-/**
- * Reads from the tables ACTION-002 already created. There is no analytics
- * *engine* yet (nothing writes AnalyticsEvent rows until ACTION-008), so
- * these aggregates are honestly zero/null today — that's the correct,
- * non-fabricated state, not a placeholder. Once ACTION-008 starts writing
- * events, these same queries start returning real numbers with no page
- * changes required.
- */
+/** Home-page summary: live bundle count plus the analytics totals, both scoped to `shopId`. */
 export async function getDashboardOverview(shopId: string): Promise<DashboardOverview> {
-  const [activeBundleCount, revenueAgg, orderCount, viewCount] = await Promise.all([
+  const [activeBundleCount, totals] = await Promise.all([
     prisma.bundle.count({ where: { shopId, status: "active" } }),
-    prisma.analyticsEvent.aggregate({
-      where: { shopId, eventType: "bundle_purchase" },
-      _sum: { revenue: true },
-    }),
-    prisma.analyticsEvent.count({ where: { shopId, eventType: "bundle_purchase" } }),
-    prisma.analyticsEvent.count({ where: { shopId, eventType: "bundle_view" } }),
+    getTotals(shopId),
   ]);
-
-  return {
-    activeBundleCount,
-    totalRevenue: revenueAgg._sum.revenue ? revenueAgg._sum.revenue.toNumber() : null,
-    orderCount,
-    conversionRate: viewCount > 0 ? orderCount / viewCount : null,
-  };
+  return { activeBundleCount, totals };
 }
 
 export async function getRecentBundles(shopId: string, limit = 5): Promise<RecentBundle[]> {

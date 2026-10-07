@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { oauthStartLimiter } from "@/lib/api/limiters";
+import { clientKey, rateLimitEnabled } from "@/lib/api/rate-limit";
+import { describeRequest, logEvent, logUnexpectedError } from "@/lib/log";
 import {
   InvalidShopError,
   MissingConfigError,
   requiredEnv,
   startOAuth,
 } from "@/lib/auth/shopify-auth";
+import { scriptSafeJson } from "@/lib/auth/script-safe";
 import { OAUTH_STATE_COOKIE_NAME, OAUTH_STATE_MAX_AGE_SECONDS } from "@/lib/auth/session";
 
 /**
@@ -22,6 +26,15 @@ import { OAUTH_STATE_COOKIE_NAME, OAUTH_STATE_MAX_AGE_SECONDS } from "@/lib/auth
  * `window.top === window.self` and this is a no-op extra hop.
  */
 export async function GET(request: NextRequest) {
+  if (rateLimitEnabled()) {
+    const limit = oauthStartLimiter.hit(clientKey(request));
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+      );
+    }
+  }
   const shop = request.nextUrl.searchParams.get("shop");
   const isTopLevel = request.nextUrl.searchParams.get("top_level") === "1";
 
@@ -33,13 +46,13 @@ export async function GET(request: NextRequest) {
     try {
       appUrl = requiredEnv("SHOPIFY_APP_URL");
     } catch {
-      console.error("SHOPIFY_APP_URL is not configured");
+      logEvent("error", "oauth_app_url_missing", { ...describeRequest(request) });
       return NextResponse.json({ error: "Authentication is not configured" }, { status: 500 });
     }
     const bounceUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, appUrl);
     bounceUrl.searchParams.set("top_level", "1");
     return new NextResponse(
-      `<!doctype html><html><head><meta charset="utf-8"></head><body><script>window.top.location.href = ${JSON.stringify(bounceUrl.toString())};</script></body></html>`,
+      `<!doctype html><html><head><meta charset="utf-8"></head><body><script>window.top.location.href = ${scriptSafeJson(bounceUrl.toString())};</script></body></html>`,
       { headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
   }
@@ -61,10 +74,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing or invalid shop parameter" }, { status: 400 });
     }
     if (error instanceof MissingConfigError) {
-      console.error("Shopify auth misconfiguration:", error.message);
+      logUnexpectedError("oauth_misconfiguration", error, request);
       return NextResponse.json({ error: "Authentication is not configured" }, { status: 500 });
     }
-    console.error("Unexpected error starting Shopify OAuth", error);
+    logUnexpectedError("oauth_start_failed", error, request);
     return NextResponse.json({ error: "Unexpected authentication error" }, { status: 500 });
   }
 }

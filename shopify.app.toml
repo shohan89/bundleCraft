@@ -7,7 +7,7 @@ embedded = true
 # Kept in sync with the "Required Shopify Permissions" list in
 # docs/05-SHOPIFY_INTEGRATION.md and tasks/phase-03-authentication/shopify-auth.md,
 # and with SHOPIFY_SCOPES in services/shopify/oauth.ts.
-scopes = "read_products,read_orders,write_themes"
+scopes = "read_products,read_orders,write_themes,write_discounts"
 
 [auth]
 redirect_urls = ["https://localhost:3000/api/auth/callback"]
@@ -15,5 +15,47 @@ redirect_urls = ["https://localhost:3000/api/auth/callback"]
 [webhooks]
 api_version = "2025-01"
 
+# Webhooks (ACTION-009 and ACTION-011). Shopify registers these on `shopify app deploy`; the
+# list must match lib/webhooks/registry.ts (lib/webhooks/registry.test.ts enforces that).
+# Every one is verified by HMAC and handled by services/webhooks/pipeline.ts.
+
+# The merchant removed the app: deactivate the shop and end its sessions.
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/api/webhooks/app-uninstalled"
+
+# A subscription was approved, cancelled, expired or frozen. The handler re-reads the
+# subscription from Shopify, so this payload can never set a plan by itself.
+[[webhooks.subscriptions]]
+topics = ["app_subscriptions/update"]
+uri = "/api/webhooks/app-subscriptions-update"
+
+# Purchase attribution for bundle analytics. Order webhooks may require Shopify's protected
+# customer data approval for public distribution; the handler stores no customer data.
+[[webhooks.subscriptions]]
+topics = ["orders/paid"]
+uri = "/api/webhooks/orders-paid"
+
+# Product events: keep the synced product catalog current (services/products, ACTION-012).
+[[webhooks.subscriptions]]
+topics = ["products/create", "products/update", "products/delete"]
+uri = "/api/webhooks/products"
+
+# MANDATORY privacy webhooks (Shopify App Store requirement). BundleCraft stores no shopper
+# personal data, so the two customer topics are acknowledged; shop/redact (48 hours after an
+# uninstall) erases the shop's data. See services/webhooks/handlers/compliance.ts.
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/api/webhooks/compliance"
+
 [build]
 automatically_update_urls_on_dev = true
+
+# Storefront requests to https://<shop>/apps/bundlecraft/* are forwarded here, signed by
+# Shopify (see services/shopify/app-proxy.ts). Like application_url, this points at the
+# dev tunnel while `shopify app dev` runs (automatically_update_urls_on_dev) and at the
+# real host in production.
+[app_proxy]
+url = "https://localhost:3000/api/storefront"
+subpath = "bundlecraft"
+prefix = "apps"

@@ -11,6 +11,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // Generated theme-extension bundle (scripts/build-widget.mjs)
+    "extensions/**/assets/*.js",
+    // Function build output and Shopify-generated GraphQL types (shopify app function typegen)
+    "extensions/**/dist/**",
+    "extensions/**/generated/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

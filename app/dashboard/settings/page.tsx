@@ -1,15 +1,11 @@
 import { CreditCard, LifeBuoy, Store } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { getPlan } from "@/lib/billing/plans";
 import { requireAuthenticatedShop } from "@/lib/dashboard/auth";
-
-const PLAN_LABEL: Record<string, string> = {
-  free: "Free",
-  starter: "Starter",
-  growth: "Growth",
-  pro: "Pro",
-};
+import { getEffectivePlan } from "@/services/billing/subscriptions";
 
 function SettingsSection({
   icon: Icon,
@@ -44,6 +40,8 @@ export default async function SettingsPage() {
   // Only shop.shopDomain/plan/status are read here — accessToken is
   // never fetched or displayed. See lib/auth/shopify-auth.ts.
   const shop = await requireAuthenticatedShop();
+  // The plan in force, from the verified subscription (not a client value).
+  const plan = getPlan(await getEffectivePlan(shop.id));
 
   return (
     <div className="space-y-6">
@@ -62,7 +60,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt className="text-muted-foreground text-xs font-medium">Plan</dt>
-              <dd className="text-foreground">{PLAN_LABEL[shop.plan] ?? shop.plan}</dd>
+              <dd className="text-foreground">{plan.name}</dd>
             </div>
           </dl>
         </SettingsSection>
@@ -72,7 +70,9 @@ export default async function SettingsPage() {
           title="Billing"
           description="Manage your BundleCraft subscription."
         >
-          <Badge variant="outline">Billing management coming soon</Badge>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/billing">Manage billing</Link>
+          </Button>
         </SettingsSection>
 
         <SettingsSection icon={LifeBuoy} title="Support" description="Get help with BundleCraft.">

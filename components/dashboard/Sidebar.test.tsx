@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("NavLinks", () => {
-  it("renders all five dashboard navigation items", () => {
+  it("renders all six dashboard navigation items", () => {
     mockUsePathname.mockReturnValue("/dashboard");
     render(<NavLinks />);
 
@@ -17,6 +17,10 @@ describe("NavLinks", () => {
     expect(screen.getByRole("link", { name: "Bundles" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create Bundle" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Analytics" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Billing" })).toHaveAttribute(
+      "href",
+      "/dashboard/billing",
+    );
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
   });
 

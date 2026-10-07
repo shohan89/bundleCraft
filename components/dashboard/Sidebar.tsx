@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Package, PlusCircle, Settings, ShoppingBag } from "lucide-react";
+import { BarChart3, CreditCard, Package, PlusCircle, Settings, ShoppingBag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,6 +37,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/analytics",
     icon: BarChart3,
     isActive: (pathname) => pathname.startsWith("/dashboard/analytics"),
+  },
+  {
+    label: "Billing",
+    href: "/dashboard/billing",
+    icon: CreditCard,
+    isActive: (pathname) => pathname.startsWith("/dashboard/billing"),
   },
   {
     label: "Settings",

@@ -1,13 +1,6 @@
-import Link from "next/link";
-import { MoreHorizontal } from "lucide-react";
+import { BundleRowActions } from "@/components/dashboard/BundleRowActions";
 import { BundleStatusBadge } from "@/components/dashboard/BundleStatusBadge";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { formatRevenue } from "@/lib/analytics/metrics";
 import {
   Table,
   TableBody,
@@ -24,48 +17,19 @@ const BUNDLE_TYPE_LABEL: Record<BundleListItem["bundleType"], string> = {
   mix_match: "Mix & match",
 };
 
-function formatRevenue(revenue: number | null): string {
-  if (revenue === null) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(revenue);
-}
+const formatBundleRevenue = (revenue: BundleListItem["revenue"]): string =>
+  formatRevenue(revenue) ?? "—";
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(date);
 }
 
-/**
- * Duplicate/Delete/Publish are disabled here because the bundle engine
- * (ACTION-005) that would actually perform them doesn't exist yet — this
- * intentionally does not fake success. Edit links to a per-bundle route
- * that ACTION-005 will fill in.
- */
-function BundleRowActions({ bundleId }: { bundleId: string }) {
+function ProductIssues({ count }: { count: number }) {
+  if (count === 0) return null;
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Bundle actions">
-          <MoreHorizontal className="size-4" aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/bundles/${bundleId}`}>Edit</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled title="Available once the bundle engine launches">
-          Duplicate
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled title="Available once the bundle engine launches">
-          Publish
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled
-          variant="destructive"
-          title="Available once the bundle engine launches"
-        >
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <span className="text-destructive block text-xs font-normal">
+      {count} {count === 1 ? "product needs" : "products need"} attention
+    </span>
   );
 }
 
@@ -90,19 +54,28 @@ export function BundleTable({ bundles }: { bundles: BundleListItem[] }) {
           <TableBody>
             {bundles.map((bundle) => (
               <TableRow key={bundle.id}>
-                <TableCell className="text-foreground font-medium">{bundle.title}</TableCell>
+                <TableCell className="text-foreground font-medium">
+                  {bundle.title}
+                  <ProductIssues count={bundle.productIssues} />
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {BUNDLE_TYPE_LABEL[bundle.bundleType]}
                 </TableCell>
                 <TableCell>
                   <BundleStatusBadge status={bundle.status} />
                 </TableCell>
-                <TableCell className="tabular-nums">{formatRevenue(bundle.revenue)}</TableCell>
+                <TableCell className="tabular-nums">
+                  {formatBundleRevenue(bundle.revenue)}
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatDate(bundle.createdAt)}
                 </TableCell>
                 <TableCell>
-                  <BundleRowActions bundleId={bundle.id} />
+                  <BundleRowActions
+                    bundleId={bundle.id}
+                    title={bundle.title}
+                    status={bundle.status}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -120,13 +93,14 @@ export function BundleTable({ bundles }: { bundles: BundleListItem[] }) {
                 <p className="text-muted-foreground text-sm">
                   {BUNDLE_TYPE_LABEL[bundle.bundleType]}
                 </p>
+                <ProductIssues count={bundle.productIssues} />
               </div>
-              <BundleRowActions bundleId={bundle.id} />
+              <BundleRowActions bundleId={bundle.id} title={bundle.title} status={bundle.status} />
             </div>
             <div className="mt-3 flex items-center justify-between text-sm">
               <BundleStatusBadge status={bundle.status} />
               <span className="text-muted-foreground tabular-nums">
-                {formatRevenue(bundle.revenue)}
+                {formatBundleRevenue(bundle.revenue)}
               </span>
             </div>
             <p className="text-muted-foreground mt-2 text-xs">

@@ -1,0 +1,51 @@
+{
+  "name": "quantity-bundle-incomplete",
+  "payload": {
+    "export": "cart-lines-discounts-generate-run",
+    "target": "cart.lines.discounts.generate.run",
+    "input": {
+      "cart": {
+        "cost": {
+          "subtotalAmount": {
+            "currencyCode": "USD"
+          }
+        },
+        "lines": [
+          {
+            "id": "gid://shopify/CartLine/1",
+            "quantity": 2,
+            "bundleId": {
+              "value": "5f0c6a6e-8f0e-4c53-9b64-6f7f3f2b9a11"
+            },
+            "instanceId": {
+              "value": "inst-1"
+            },
+            "cost": {
+              "subtotalAmount": {
+                "amount": "40.00"
+              }
+            },
+            "merchandise": {
+              "__typename": "ProductVariant",
+              "id": "gid://shopify/ProductVariant/2001",
+              "product": {
+                "id": "gid://shopify/Product/1001"
+              }
+            }
+          }
+        ]
+      },
+      "discount": {
+        "discountClasses": [
+          "PRODUCT"
+        ],
+        "configuration": {
+          "value": "{\"version\":1,\"bundleId\":\"5f0c6a6e-8f0e-4c53-9b64-6f7f3f2b9a11\",\"name\":\"Complete Look\",\"type\":\"quantity\",\"requiredQuantity\":3,\"discount\":{\"type\":\"percentage\",\"value\":20},\"currencyCode\":\"USD\",\"rows\":[{\"productId\":\"1001\",\"variantId\":\"2001\",\"quantity\":1},{\"productId\":\"1002\",\"variantId\":\"2002\",\"quantity\":2}]}"
+        }
+      }
+    },
+    "output": {
+      "operations": []
+    }
+  }
+}
